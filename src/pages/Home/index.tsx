@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Text,
   ActivityIndicator,
+  Image,
   FlatList,
   Alert,
   Keyboard,
@@ -18,6 +19,8 @@ import { useButtonContex } from '../../hooks/ButtonContext';
 
 import apolloClient from '../../services/api';
 import ListItem from '../../components/ListItem';
+
+import ListLogo from '../../assets/list.png';
 
 interface GithubRepository {
   repository: {
@@ -36,6 +39,7 @@ const Home: React.FC = () => {
 
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isEmptyList, setIsEmptyList] = useState(true);
   const [repositories, setRepositories] = useState<GithubRepository[]>([]);
 
   async function handleSubmitt() {
@@ -67,6 +71,7 @@ const Home: React.FC = () => {
 
       if (response.data) {
         setRepositories([...repositories, response.data]);
+        setIsEmptyList(false);
       }
     } catch (error) {
       Alert.alert('Error', 'Repository not found');
@@ -85,6 +90,7 @@ const Home: React.FC = () => {
 
     if (rep.length === 0) {
       hideRemoveButton();
+      setIsEmptyList(true);
     }
   }
 
@@ -116,21 +122,27 @@ const Home: React.FC = () => {
           </TouchableOpacity>
         </View>
 
-        <FlatList
-          style={styles.repositoryList}
-          data={repositories}
-          keyExtractor={item => item.repository.id}
-          renderItem={({ item }) => (
-            <ListItem
-              key={item.repository.id}
-              id={item.repository.id}
-              name={item.repository.name}
-              avatarUrl={item.repository.owner.avatarUrl}
-              description={item.repository.description}
-              handleRemoveRepository={handleRemoveRepository}
-            />
-          )}
-        />
+        {isEmptyList ? (
+          <View style={styles.imageContainer}>
+            <Image style={styles.emptyListImage} source={ListLogo} />
+          </View>
+        ) : (
+          <FlatList
+            style={styles.repositoryList}
+            data={repositories}
+            keyExtractor={item => item.repository.id}
+            renderItem={({ item }) => (
+              <ListItem
+                key={item.repository.id}
+                id={item.repository.id}
+                name={item.repository.name}
+                avatarUrl={item.repository.owner.avatarUrl}
+                description={item.repository.description}
+                handleRemoveRepository={handleRemoveRepository}
+              />
+            )}
+          />
+        )}
       </SafeAreaView>
     </TouchableWithoutFeedback>
   );
@@ -171,6 +183,16 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: '#232129',
     fontWeight: '500',
+  },
+  imageContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyListImage: {
+    width: 250,
+    height: 250,
+    opacity: 0.15,
   },
   repositoryList: {
     marginTop: 30,
