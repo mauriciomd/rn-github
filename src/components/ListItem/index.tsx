@@ -1,5 +1,12 @@
-import React from 'react';
-import { View, TouchableOpacity, Text, Image, StyleSheet } from 'react-native';
+import React, { useRef, useMemo } from 'react';
+import {
+  View,
+  TouchableOpacity,
+  Text,
+  Image,
+  StyleSheet,
+  Animated,
+} from 'react-native';
 
 import { useButtonContex } from '../../hooks/ButtonContext';
 
@@ -19,6 +26,19 @@ const ListItem: React.FC<ListIemProps> = ({
   handleRemoveRepository,
 }) => {
   const { isRemoveButtonShown, showRemoveButton } = useButtonContex();
+  const removeButtonAnimation = useRef(new Animated.Value(0)).current;
+
+  const startRemoveButtonAnimation = useMemo(() => {
+    return Animated.timing(removeButtonAnimation, {
+      toValue: 1,
+      useNativeDriver: true,
+      duration: 200,
+    });
+  }, [removeButtonAnimation]);
+
+  if (isRemoveButtonShown) {
+    startRemoveButtonAnimation.start();
+  }
 
   return (
     <View style={styles.repositoryItem}>
@@ -28,12 +48,13 @@ const ListItem: React.FC<ListIemProps> = ({
         activeOpacity={0.7}
       >
         {isRemoveButtonShown && (
-          <TouchableOpacity
-            style={styles.removeButton}
-            onPress={() => handleRemoveRepository(id)}
+          <Animated.View
+            style={[styles.removeButton, { opacity: removeButtonAnimation }]}
           >
-            <Text style={styles.removeButtonText}>X</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={() => handleRemoveRepository(id)}>
+              <Text style={styles.removeButtonText}>X</Text>
+            </TouchableOpacity>
+          </Animated.View>
         )}
 
         <Image source={{ uri: avatarUrl }} style={styles.userAvatar} />
