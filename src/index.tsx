@@ -1,14 +1,13 @@
 import React from 'react';
-import { ApolloProvider } from '@apollo/client';
 
-import apolloClient from './services/api';
+import { ButtonContextProvider } from './hooks/ButtonContext';
 import Home from './pages/Home';
 
 const src: React.FC = () => {
   return (
-    <ApolloProvider client={apolloClient}>
+    <ButtonContextProvider>
       <Home />
-    </ApolloProvider>
+    </ButtonContextProvider>
   );
 };
 

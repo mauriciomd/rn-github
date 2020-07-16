@@ -6,29 +6,34 @@ import {
   TextInput,
   TouchableOpacity,
   Text,
-  Image,
   ActivityIndicator,
   FlatList,
   Alert,
   Keyboard,
+  TouchableWithoutFeedback,
 } from 'react-native';
-
 import { gql } from '@apollo/client';
+
+import { useButtonContex } from '../../hooks/ButtonContext';
+
 import apolloClient from '../../services/api';
+import ListItem from '../../components/ListItem';
 
 interface GithubRepository {
   repository: {
     id: string;
     description: string;
+    url: string;
     owner: {
-      login: string;
       avatarUrl: string;
     };
-    user: string;
+    name: string;
   };
 }
 
 const Home: React.FC = () => {
+  const { hideRemoveButton } = useButtonContex();
+
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [repositories, setRepositories] = useState<GithubRepository[]>([]);
@@ -46,9 +51,9 @@ const Home: React.FC = () => {
       {
         repository(name: "${name}", owner: "${owner}") {
           id
+          name
           description
           owner {
-            login
             avatarUrl
           }
         }
@@ -71,58 +76,58 @@ const Home: React.FC = () => {
     }
   }
 
+  function handleRemoveRepository(repositoryId: string): void {
+    const rep = repositories.filter(
+      item => item.repository.id !== repositoryId,
+    );
+    setRepositories(rep);
+  }
+
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.header}>
-        <TextInput
-          style={styles.userInput}
-          placeholder="user/repository"
-          placeholderTextColor="#b9b9b9"
-          autoCapitalize="none"
-          autoCorrect={false}
-          returnKeyType="send"
-          value={inputValue}
-          onChangeText={text => setInputValue(text)}
-          onSubmitEditing={handleSubmitt}
-        />
-        <TouchableOpacity
-          style={styles.searchButton}
-          onPress={handleSubmitt}
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <ActivityIndicator color="#232129" />
-          ) : (
-            <Text style={styles.searchButtonText}>Search</Text>
-          )}
-        </TouchableOpacity>
-      </View>
-
-      <FlatList
-        style={styles.repositoryList}
-        data={repositories}
-        keyExtractor={item => item.repository.id}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.repositoryContainer}>
-            <Image
-              source={{
-                uri: item.repository.owner.avatarUrl,
-              }}
-              style={styles.userAvatar}
-            />
-
-            <View style={styles.descriptionContainer}>
-              <Text style={styles.titleText}>
-                {item.repository.owner.login}
-              </Text>
-              <Text style={styles.descriptionText}>
-                {item.repository.description}
-              </Text>
-            </View>
+    <TouchableWithoutFeedback onPress={hideRemoveButton}>
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TextInput
+            style={styles.userInput}
+            placeholder="user/repository"
+            placeholderTextColor="#b9b9b9"
+            autoCapitalize="none"
+            autoCorrect={false}
+            returnKeyType="send"
+            value={inputValue}
+            onChangeText={text => setInputValue(text)}
+            onSubmitEditing={handleSubmitt}
+          />
+          <TouchableOpacity
+            style={styles.searchButton}
+            onPress={handleSubmitt}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <ActivityIndicator color="#232129" />
+            ) : (
+              <Text style={styles.searchButtonText}>Search</Text>
+            )}
           </TouchableOpacity>
-        )}
-      />
-    </SafeAreaView>
+        </View>
+
+        <FlatList
+          style={styles.repositoryList}
+          data={repositories}
+          keyExtractor={item => item.repository.id}
+          renderItem={({ item }) => (
+            <ListItem
+              key={item.repository.id}
+              id={item.repository.id}
+              name={item.repository.name}
+              avatarUrl={item.repository.owner.avatarUrl}
+              description={item.repository.description}
+              handleRemoveRepository={handleRemoveRepository}
+            />
+          )}
+        />
+      </SafeAreaView>
+    </TouchableWithoutFeedback>
   );
 };
 
@@ -164,36 +169,5 @@ const styles = StyleSheet.create({
   },
   repositoryList: {
     marginTop: 30,
-  },
-  repositoryContainer: {
-    backgroundColor: '#ffffff',
-    height: 120,
-    borderRadius: 10,
-    padding: 15,
-    marginTop: 10,
-    marginRight: 20,
-    marginLeft: 20,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  userAvatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 20,
-  },
-  descriptionContainer: {
-    flex: 1,
-    marginLeft: 15,
-  },
-  titleText: {
-    fontSize: 24,
-    color: '#ff9000',
-    fontWeight: 'bold',
-  },
-  descriptionText: {
-    marginTop: 5,
-    color: '#232129',
-    fontSize: 18,
   },
 });
