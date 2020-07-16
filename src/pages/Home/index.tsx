@@ -80,7 +80,12 @@ const Home: React.FC = () => {
     const rep = repositories.filter(
       item => item.repository.id !== repositoryId,
     );
+
     setRepositories(rep);
+
+    if (rep.length === 0) {
+      hideRemoveButton();
+    }
   }
 
   return (
@@ -160,7 +165,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#ff9000',
-    borderRadius: 10,
+    borderRadius: 5,
   },
   searchButtonText: {
     fontSize: 18,
