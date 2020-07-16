@@ -1,4 +1,4 @@
-import React, { useRef, useMemo } from 'react';
+import React, { useRef, useMemo, useState } from 'react';
 import {
   View,
   TouchableOpacity,
@@ -6,6 +6,10 @@ import {
   Image,
   StyleSheet,
   Animated,
+  Platform,
+  UIManager,
+  LayoutAnimation,
+  Dimensions,
 } from 'react-native';
 
 import { useButtonContex } from '../../hooks/ButtonContext';
@@ -18,6 +22,13 @@ interface ListIemProps {
   handleRemoveRepository(id: string): void;
 }
 
+if (
+  Platform.OS === 'android' &&
+  UIManager.setLayoutAnimationEnabledExperimental
+) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
+
 const ListItem: React.FC<ListIemProps> = ({
   id,
   name,
@@ -27,8 +38,9 @@ const ListItem: React.FC<ListIemProps> = ({
 }) => {
   const { isRemoveButtonShown, showRemoveButton } = useButtonContex();
   const removeButtonAnimation = useRef(new Animated.Value(0)).current;
+  const [isAnimationStarted, setIsAnimationStarted] = useState(false);
 
-  const startRemoveButtonAnimation = useMemo(() => {
+  const createRemoveButtonAnimation = useMemo(() => {
     return Animated.timing(removeButtonAnimation, {
       toValue: 1,
       useNativeDriver: true,
@@ -36,12 +48,24 @@ const ListItem: React.FC<ListIemProps> = ({
     });
   }, [removeButtonAnimation]);
 
+  function removeItem(): void {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut, () => {
+      handleRemoveRepository(id);
+    });
+    setIsAnimationStarted(true);
+  }
+
   if (isRemoveButtonShown) {
-    startRemoveButtonAnimation.start();
+    createRemoveButtonAnimation.start();
   }
 
   return (
-    <View style={styles.repositoryItem}>
+    <Animated.View
+      style={[
+        styles.repositoryItem,
+        isAnimationStarted ? styles.removeAnimation : null,
+      ]}
+    >
       <TouchableOpacity
         style={styles.repositoryContainer}
         onLongPress={showRemoveButton}
@@ -51,7 +75,7 @@ const ListItem: React.FC<ListIemProps> = ({
           <Animated.View
             style={[styles.removeButton, { opacity: removeButtonAnimation }]}
           >
-            <TouchableOpacity onPress={() => handleRemoveRepository(id)}>
+            <TouchableOpacity onPress={removeItem}>
               <Text style={styles.removeButtonText}>X</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -64,7 +88,7 @@ const ListItem: React.FC<ListIemProps> = ({
           <Text style={styles.descriptionText}>{description}</Text>
         </View>
       </TouchableOpacity>
-    </View>
+    </Animated.View>
   );
 };
 
@@ -73,6 +97,9 @@ export default ListItem;
 const styles = StyleSheet.create({
   repositoryItem: {
     position: 'relative',
+  },
+  removeAnimation: {
+    left: -Dimensions.get('window').width,
   },
   repositoryContainer: {
     backgroundColor: '#ffffff',
@@ -91,9 +118,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#ff0000',
     top: -5,
     right: -5,
-    width: 20,
-    height: 20,
-    borderRadius: 10,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
     alignItems: 'center',
     justifyContent: 'center',
   },
